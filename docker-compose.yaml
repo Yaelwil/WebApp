@@ -1,0 +1,74 @@
+version: '1'  # This is a static version, not using the env variable
+
+services:
+  mongodb_primary:
+    image: ${mongodb_image}
+    container_name: ${mongo_primary_container_name}
+    ports:
+      - "27017:27017"
+    volumes:
+       - mongodb_primary_volume:/data/db
+    networks:
+      - mongodb_replica_set
+      - mongodb_primary_to_backend
+    command: mongod --replSet myReplicaSet --bind_ip_all
+
+  mongodb_secondary_1:
+    image: ${mongodb_image}
+    container_name: ${mongo_secondary_1_container_name}
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_secondary_1_volume:/data/db
+    networks:
+      - mongodb_replica_set
+    command: mongod --replSet myReplicaSet --bind_ip_all
+
+  mongodb_secondary_2:
+    image: ${mongodb_image}
+    container_name: ${mongo_secondary_2_container_name}
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongodb_secondary_2_volume:/data/db
+    networks:
+      - mongodb_replica_set
+    command: mongod --replSet myReplicaSet --bind_ip_all
+
+  replica_initializer:
+    build:
+      context: ./set_replica
+      dockerfile: Dockerfile
+    container_name: ${replica_initializer_name}
+    depends_on:
+      - mongodb_primary
+      - mongodb_secondary_1
+      - mongodb_secondary_2
+    networks:
+      - mongodb_replica_set
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${backend_container_name}
+    networks:
+      - mongodb_primary_to_backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+
+
+networks:
+  mongodb_replica_set:
+    name: ${mongodb_replica_set}
+    driver: ${driver}
+  mongodb_primary_to_backend:
+    name: ${mongodb_primary_to_backend}
+    driver: ${driver}
+
+volumes:
+  mongodb_primary_volume:
+  mongodb_secondary_1_volume:
+  mongodb_secondary_2_volume:
