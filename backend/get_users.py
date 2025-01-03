@@ -1,14 +1,18 @@
 from pymongo import MongoClient
+import uuid
+
+# MongoDB Connection
+MONGO_URI = "mongodb://mongodb_primary:27017"
+client = MongoClient(MONGO_URI)
+db = client['polybot']  # Name of the database
+users_collection = db['users']  # Name of the collection
+
 
 def get_all_users():
+    """
+    Retrieve all users from the MongoDB collection.
+    """
     try:
-        # Connect to MongoDB
-        # MongoDB URI and Database Setup
-        MONGO_URI = "mongodb://mongodb_primary:27017"  # Change this if you're using a remote DB
-        client = MongoClient(MONGO_URI)
-        db = client['polybot']  # Name of the database
-        users_collection = db['users']  # Name of the collection
-
         # Fetch all users from the MongoDB collection
         users = users_collection.find()
 
